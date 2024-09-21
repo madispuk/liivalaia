@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with Orthophoto Base and JPEG Overlay</title>
+    <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map { height: 80vh; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-4">
+
+        <div id="controls" class="flex justify-center mt-4">
+<h2 class="text-1xl font-semibold dark:text-white">Liivalaia eskiis 27.09.2022</h2>
+        </div>
+        <div id="map" class="rounded shadow-lg border border-gray-300"></div>
+        
+        <div id="controls" class="flex justify-center mt-4">
+            <div class="slider-group w-full md:w-1/2 bg-white p-4 rounded-lg shadow-lg border border-gray-300">
+                <label class="block text-sm font-semibold mb-2 text-center">Overlay opacity: <span id="opacity-display"
+						class="font-bold text-indigo-600">0.33</span></label>
+                <input type="range" id="opacity" min="0" max="1" step="0.01" value="0.33" class="w-full h-2 bg-indigo-300 rounded-lg appearance-none cursor-pointer">
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <!-- Load proj4 before proj4leaflet -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.js"></script>
+
+    <script>
+        // Initialize the custom projection using Proj4Leaflet
+        var crs = new L.Proj.CRS('EPSG:3301',
+            '+proj=lcc +lat_1=59.33333333333334 +lat_2=58 +lat_0=57.51755393055556 +lon_0=24 +x_0=500000 +y_0=6375000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+            {
+                resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625],
+            });
+
+        // Initialize the map with the custom CRS and center on Liivalaia Street
+        var map = L.map('map', {
+            crs: crs,
+            center: L.latLng(59.429065, 24.754171), // Liivalaia and Kentmanni crossing, Tallinn
+            zoom: 11 // Zoom level for detailed view
+        });
+
+        // Add the Orthophoto WMS layer as the base layer
+        var ortoBaseLayer = L.tileLayer.wms('https://kaart.maaamet.ee/wms/alus?', {
+            layers: 'of10000',
+            format: 'image/png',
+            transparent: false // As it's the base layer, no need for transparency
+        }).addTo(map);
+
+        // Image overlay variable (initial bounds)
+        var imageUrl = 'liivalaia.jpeg'; // Path to the JPEG image
+        var imageBounds = [
+            [59.435725, 24.720350], // Upper-left corner (latitude, longitude)
+            [59.424995, 24.765921]  // Lower-right corner (latitude, longitude)
+        ];
+
+        // Add the image overlay with initial opacity
+        var imageOverlay = L.imageOverlay(imageUrl, imageBounds, {
+            opacity: 0.33 // Initial opacity
+        }).addTo(map);
+
+        // Function to update the overlay opacity dynamically
+        function updateOverlayOpacity() {
+            var opacity = parseFloat(document.getElementById('opacity').value);
+
+            // Update the display of opacity value
+            document.getElementById('opacity-display').innerText = opacity.toFixed(2);
+
+            // Update the overlay opacity
+            imageOverlay.setOpacity(opacity);
+        }
+
+        // Attach event listeners to sliders
+        document.getElementById('opacity').addEventListener('input', updateOverlayOpacity);
+    </script>
+</body>
+</html>
